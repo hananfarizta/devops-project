@@ -77,13 +77,15 @@ Pipeline CI/CD memerlukan akses ke Azure. Kita akan membuat Service Principal da
 3.  **Tambahkan secrets ke repositori GitHub Anda:**
     Buka `Settings` > `Secrets and variables` > `Actions` di repositori GitHub Anda dan tambahkan secrets berikut:
 
-| Secret Name                                   | Value                                                     |
-| --------------------------------------------  | --------------------------------------------------------- |
-| `AZURE_CREDENTIALS`                           | JSON lengkap yang Anda salin dari langkah sebelumnya.     |
-| `AZURE_RESOURCE_GROUP`                        | Nama Resource Group Anda (mis. `devopsapp-rg`).           |
-| `ACR_NAME`                                    | Nama Azure Container Registry Anda (mis. `devopsappacr`). |
-| `AZURE_AKS_NAME`                              | Nama cluster AKS Anda (mis. `devopsapp-aks`).             |
-| `AZURE_CONTAINER_REGISTRY_LOGIN_SERVER`       | Dari tahap tfplan (mis. `devopsappacr.azurecr.io`).             |
+| Secret Name            | Value                                                     |
+| ---------------------- | --------------------------------------------------------- |
+| `AZURE_CREDENTIALS`    | JSON lengkap yang Anda salin dari langkah sebelumnya.     |
+| `AZURE_RESOURCE_GROUP` | Nama Resource Group Anda (mis. `devopsapp-rg`).           |
+| `ACR_NAME`             | Nama Azure Container Registry Anda (mis. `devopsappacr`). |
+| `AZURE_AKS_NAME`       | Nama cluster AKS Anda (mis. `devopsapp-aks`).             |
+| `AZURE_CONTAINER_REGISTRY_LOGIN_SERVER`       | Dari Tahap tfplan (mis. `devopsappacr.azurecr.io`).             |
+| `AZURE_CLIENT_ID`       | Dari output JSON AZURE_CREDENTIALS (mis. `7056f1c4-ee88-494axxx`).             |
+| `AZURE_CLIENT_SECRET`       | Dari output JSON AZURE_CREDENTIALS (mis. `YqU8Q~fZBvufiV_Fzxxx`).             |
 
 ### 4. Setup Cluster Kubernetes
 
