@@ -18,7 +18,7 @@ spec:
       containers:
       - name: hello-app
         # Placeholder ini akan digantikan oleh Kustomize di overlay
-        image: devopsappacr.azurecr.io/hello-app:latest
+        image: hello-app-image
         ports:
         - containerPort: 3000
         envFrom:
