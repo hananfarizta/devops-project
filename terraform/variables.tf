@@ -26,7 +26,7 @@ variable "node_count" {
 variable "node_size" {
   type        = string
   description = "Ukuran VM untuk node AKS."
-  default     = "Standard_DS2_v2"
+  default     = "Standard_B2s"
 }
 
 variable "acr_sku" {

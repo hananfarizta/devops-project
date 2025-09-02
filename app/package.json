@@ -14,7 +14,7 @@
         "kubernetes",
         "azure"
     ],
-    "author": "HeyPico.ai",
+    "author": "DevOpsApp",
     "license": "MIT",
     "dependencies": {
         "express": "^4.19.2"

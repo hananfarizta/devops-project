@@ -3,26 +3,26 @@ alertmanager:
     global:
       resolve_timeout: 5m
       # Referensi ke secret untuk kredensial SMTP
-      smtp_from: 'alertmanager@heypico.com' # Ganti dengan email pengirim Anda
-      smtp_smarthost: 'smtp.sendgrid.net:587' # Ganti dengan host SMTP Anda
+      smtp_from: "qahananfarizta@gmail.com" # Ganti dengan email pengirim Anda
+      smtp_smarthost: "smtp.gmail.com:587" # Ganti dengan host SMTP Anda
       smtp_auth_username:
         name: alertmanager-smtp
         key: user
       smtp_auth_password:
         name: alertmanager-smtp
         key: password
-    
+
     route:
-      group_by: ['alertname', 'namespace', 'severity']
+      group_by: ["alertname", "namespace", "severity"]
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 1h
-      receiver: 'email-receiver'
-    
+      receiver: "email-receiver"
+
     receivers:
-      - name: 'email-receiver'
+      - name: "email-receiver"
         email_configs:
-          - to: 'admin-oncall@heypico.com' # Ganti dengan email penerima
+          - to: "hananfariztaa@gmail.com" # Ganti dengan email penerima
             send_resolved: true
 
 # Konfigurasi Grafana
@@ -33,7 +33,7 @@ grafana:
     enabled: true
     ingressClassName: nginx
     hosts:
-      - grafana.heypico.com # Ganti dengan domain Anda
+      - grafana.devops.com # Ganti dengan domain Anda
     path: /
 
 # Aktifkan service monitors untuk Trivy Operator

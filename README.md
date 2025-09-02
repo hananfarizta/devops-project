@@ -5,6 +5,7 @@ Repositori ini berisi contoh lengkap untuk men-deploy, mengelola, dan memonitor 
 ## Prasyarat
 
 Sebelum memulai, pastikan Anda telah menginstal dan mengkonfigurasi tool berikut:
+
 - **Azure CLI**: `v2.50.0` atau lebih baru
 - **Terraform**: `v1.9.0` atau lebih baru
 - **kubectl**: `v1.28.0` atau lebih baru
@@ -18,6 +19,7 @@ Sebelum memulai, pastikan Anda telah menginstal dan mengkonfigurasi tool berikut
 ### 1. Setup Awal
 
 1.  **Clone repositori ini:**
+
     ```bash
     git clone <URL_REPO_ANDA>
     cd <NAMA_REPO>
@@ -36,10 +38,11 @@ Infrastruktur inti (Resource Group, ACR, AKS, Log Analytics) akan dibuat menggun
 
 1.  **Siapkan file variabel Terraform:**
     Salin file contoh dan sesuaikan nilainya. `prefix_name` harus unik.
+
     ```bash
     cp terraform/terraform.tfvars.sample terraform/terraform.tfvars
     # Edit terraform/terraform.tfvars sesuai kebutuhan Anda
-    # Contoh: prefix_name = "heypicoapp"
+    # Contoh: prefix_name = "devopsapp"
     ```
 
 2.  **Inisialisasi dan Terapkan Terraform:**
@@ -57,12 +60,13 @@ Pipeline CI/CD memerlukan akses ke Azure. Kita akan membuat Service Principal da
 
 1.  **Buat Service Principal (SP) untuk GitHub Actions:**
     Ganti `<SUBSCRIPTION_ID>` dan `<RESOURCE_GROUP_NAME>` dengan nilai dari output Terraform.
+
     ```bash
     # Dapatkan Subscription ID
     SUB_ID=$(az account show --query id --output tsv)
-    
-    # Dapatkan Resource Group dari output Terraform (mis: 'heypicoapp-rg')
-    RG_NAME="heypicoapp-rg" # Ganti dengan nama resource group Anda
+
+    # Dapatkan Resource Group dari output Terraform (mis: 'devopsapp-rg')
+    RG_NAME="devopsapp-rg" # Ganti dengan nama resource group Anda
 
     # Buat SP dengan scope ke Resource Group
     az ad sp create-for-rbac --name "github-actions-sp" --role "Contributor" --scopes "/subscriptions/${SUB_ID}/resourceGroups/${RG_NAME}" --sdk-auth
@@ -73,26 +77,28 @@ Pipeline CI/CD memerlukan akses ke Azure. Kita akan membuat Service Principal da
 3.  **Tambahkan secrets ke repositori GitHub Anda:**
     Buka `Settings` > `Secrets and variables` > `Actions` di repositori GitHub Anda dan tambahkan secrets berikut:
 
-| Secret Name              | Value                                                              |
-| ------------------------ | ------------------------------------------------------------------ |
-| `AZURE_CREDENTIALS`      | JSON lengkap yang Anda salin dari langkah sebelumnya.              |
-| `AZURE_RESOURCE_GROUP`   | Nama Resource Group Anda (mis. `heypicoapp-rg`).                   |
-| `ACR_NAME`               | Nama Azure Container Registry Anda (mis. `heypicoappacr`).         |
-| `AZURE_AKS_NAME`         | Nama cluster AKS Anda (mis. `heypicoapp-aks`).                     |
+| Secret Name            | Value                                                     |
+| ---------------------- | --------------------------------------------------------- |
+| `AZURE_CREDENTIALS`    | JSON lengkap yang Anda salin dari langkah sebelumnya.     |
+| `AZURE_RESOURCE_GROUP` | Nama Resource Group Anda (mis. `devopsapp-rg`).           |
+| `ACR_NAME`             | Nama Azure Container Registry Anda (mis. `devopsappacr`). |
+| `AZURE_AKS_NAME`       | Nama cluster AKS Anda (mis. `devopsapp-aks`).             |
 
 ### 4. Setup Cluster Kubernetes
 
 Setelah cluster AKS siap, kita perlu mengkonfigurasi beberapa komponen di dalamnya.
 
 1.  **Dapatkan Kredensial `kubectl`:**
+
     ```bash
     # Gunakan nama dari output Terraform atau secret GitHub
     az aks get-credentials --resource-group <NAMA_RESOURCE_GROUP> --name <NAMA_CLUSTER_AKS>
     ```
 
 2.  **Install NGINX Ingress Controller:**
+
     ```bash
-    helm repo add ingress-nginx [https://kubernetes.github.io/ingress-nginx](https://kubernetes.github.io/ingress-nginx)
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
     helm repo update
     helm install ingress-nginx ingress-nginx/ingress-nginx \
       --create-namespace \
@@ -101,6 +107,7 @@ Setelah cluster AKS siap, kita perlu mengkonfigurasi beberapa komponen di dalamn
     ```
 
 3.  **Install kube-prometheus-stack (Monitoring):**
+
     ```bash
     helm repo add prometheus-community [https://prometheus-community.github.io/helm-charts](https://prometheus-community.github.io/helm-charts)
     helm repo update
@@ -111,14 +118,24 @@ Setelah cluster AKS siap, kita perlu mengkonfigurasi beberapa komponen di dalamn
     ```
 
 4.  **Konfigurasi Alerting Email untuk Prometheus:**
+
     - Buat file `secret-alertmanager.yaml` dari contoh: `cp monitoring/secret-alertmanager.example.yaml monitoring/secret-alertmanager.yaml`
     - Edit `monitoring/secret-alertmanager.yaml` dan isi detail SMTP Anda (enkripsi base64).
     - Apply secret tersebut: `kubectl apply -f monitoring/secret-alertmanager.yaml -n monitoring`
-    - Update Helm release untuk menggunakan config baru: `helm upgrade --install kube-prometheus-stack ... --set alertmanager.config.global.smtp_from=...` (lihat `values-kube-prom.yaml` untuk detail).
+    - Update Helm release untuk menggunakan config baru: 
+
+    ```bash
+    helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+        --namespace monitoring \
+        -f monitoring/values-kube-prom.yaml \
+        --set alertmanager.config.global.smtp_from='sender_email'
+    ```
+    (lihat `values-kube-prom.yaml` untuk detail).
 
 5.  **Install Trivy Operator (Security):**
+
     ```bash
-    helm repo add aqua [https://aquasecurity.github.io/helm-charts/](https://aquasecurity.github.io/helm-charts/)
+    helm repo add aqua https://aquasecurity.github.io/helm-charts/
     helm repo update
     helm install trivy-operator aqua/trivy-operator \
       --create-namespace \
@@ -136,6 +153,8 @@ Setelah cluster AKS siap, kita perlu mengkonfigurasi beberapa komponen di dalamn
     - Isi dengan nilai rahasia (sebagai string base64).
     - Buat secret di cluster:
       ```bash
+      kubectl create namespace staging
+      
       kubectl create secret generic app-secret \
         --from-literal=APP_SECRET='super-secret-string-for-app' \
         -n staging
@@ -162,13 +181,13 @@ Anda dapat memantau jalannya workflow di tab "Actions" pada repositori GitHub An
     kubectl get svc -n ingress-nginx
     # Dapatkan EXTERNAL-IP dari service ingress-nginx-controller
     ```
-    Edit file `/etc/hosts` Anda (atau konfigurasikan DNS) untuk mengarahkan `staging.heypico.com` ke IP eksternal tersebut. Lalu akses di browser: `http://staging.heypico.com`
 
+    Edit file `/etc/hosts` Anda (atau konfigurasikan DNS) untuk mengarahkan `staging.devops.com` ke IP eksternal tersebut. Lalu akses di browser: `http://staging.devops.com`
 
 2.  **Akses Grafana:**\
-    Akses `http://grafana.heypico.com`. Login dengan user `admin` dan password `prom-operator` (atau yang dikonfigurasi di `values-kube-prom.yaml`). Anda akan melihat dashboard untuk memonitor cluster dan aplikasi Anda.
+    Akses `http://grafana.devops.com`. Login dengan user `admin` dan password `prom-operator` (atau yang dikonfigurasi di `values-kube-prom.yaml`). Anda akan melihat dashboard untuk memonitor cluster dan aplikasi Anda.
 
-3. **Verifikasi HPA:**\
+3.  **Verifikasi HPA:**\
     Gunakan tool seperti `hey` atau `ab` untuk mengirim beban ke aplikasi dan lihat HPA men-skala jumlah pod.
 
     ```bash
@@ -181,18 +200,19 @@ Anda dapat memantau jalannya workflow di tab "Actions" pada repositori GitHub An
         # while true; do wget -q -O- [http://hello-app-service.staging.svc.cluster.local/](http://hello-app-service.staging.svc.cluster.local/); done
     ```
 
-
 ### 7. Cleanup
+
 Untuk menghapus semua resource yang telah dibuat:
 
 ```bash
 cd terraform
 terraform destroy
 ```
+
 Ini akan menghapus semua resource Azure yang dibuat oleh Terraform.
 
-
 ## Troubleshooting
+
 1. ImagePullBackOff: Pastikan Service Principal memiliki peran `AcrPull` pada ACR. Terraform seharusnya sudah mengaturnya, tetapi verifikasi di Azure Portal jika terjadi masalah.
 
 2. Ingress tidak mendapatkan IP: Cek log dari pod NGINX Ingress Controller di namespace `ingress-nginx`. Pastikan tidak ada batasan jaringan di Azure.

@@ -3,20 +3,20 @@ kind: Kustomization
 
 # Mewarisi dari base
 resources:
-- ../../base
+  - ../../base
 
 # Patch untuk lingkungan staging
 patches:
-- patch: |-
-    - op: replace
-      path: /spec/rules/0/host
-      value: staging.heypico.com
-  target:
-    kind: Ingress
-    name: hello-app-ingress
+  - patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: staging.devops.com
+    target:
+      kind: Ingress
+      name: hello-app-ingress
 
 # CI/CD akan mengganti image tag di sini
 images:
-- name: hello-app-image
-  newName: heypicoappacr.azurecr.io/hello-app # Ganti dengan nama ACR anda
-  newTag: dummy-tag-from-ci-cd # Ini akan ditimpa oleh pipeline
+  - name: hello-app-image
+    newName: devopsappacr.azurecr.io/hello-app # Ganti dengan nama ACR anda
+    newTag: dummy-tag-from-ci-cd # Ini akan ditimpa oleh pipeline

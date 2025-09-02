@@ -33,7 +33,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = var.dns_prefix != "" ? var.dns_prefix : var.prefix_name
-  kubernetes_version  = "1.28" # Tentukan versi yang stabil
+  kubernetes_version  = "1.30.3" # Tentukan versi yang stabil
 
   default_node_pool {
     name       = "default"

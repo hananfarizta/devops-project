@@ -2,7 +2,7 @@ const express = require("express");
 
 // Konfigurasi aplikasi dari environment variables
 const PORT = process.env.PORT || 3000;
-const APP_MESSAGE = process.env.APP_MESSAGE || "Hello from HeyPico.ai";
+const APP_MESSAGE = process.env.APP_MESSAGE || "Hello from DevOpsApp";
 const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 
 const app = express();
