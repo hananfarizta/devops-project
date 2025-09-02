@@ -18,5 +18,5 @@ patches:
 # CI/CD akan mengganti image tag di sini
 images:
   - name: hello-app-image
-    newName: ${ACR_LOGIN_SERVER}/hello-app
-    newTag: ${GITHUB_SHA}
+    newName: devopsappacr.azurecr.io/hello-app # Ganti dengan nama ACR anda
+    newTag: dummy-tag-from-ci-cd # Ini akan ditimpa oleh pipeline
