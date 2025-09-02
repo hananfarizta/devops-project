@@ -77,12 +77,13 @@ Pipeline CI/CD memerlukan akses ke Azure. Kita akan membuat Service Principal da
 3.  **Tambahkan secrets ke repositori GitHub Anda:**
     Buka `Settings` > `Secrets and variables` > `Actions` di repositori GitHub Anda dan tambahkan secrets berikut:
 
-| Secret Name            | Value                                                     |
-| ---------------------- | --------------------------------------------------------- |
-| `AZURE_CREDENTIALS`    | JSON lengkap yang Anda salin dari langkah sebelumnya.     |
-| `AZURE_RESOURCE_GROUP` | Nama Resource Group Anda (mis. `devopsapp-rg`).           |
-| `ACR_NAME`             | Nama Azure Container Registry Anda (mis. `devopsappacr`). |
-| `AZURE_AKS_NAME`       | Nama cluster AKS Anda (mis. `devopsapp-aks`).             |
+| Secret Name                                   | Value                                                     |
+| --------------------------------------------  | --------------------------------------------------------- |
+| `AZURE_CREDENTIALS`                           | JSON lengkap yang Anda salin dari langkah sebelumnya.     |
+| `AZURE_RESOURCE_GROUP`                        | Nama Resource Group Anda (mis. `devopsapp-rg`).           |
+| `ACR_NAME`                                    | Nama Azure Container Registry Anda (mis. `devopsappacr`). |
+| `AZURE_AKS_NAME`                              | Nama cluster AKS Anda (mis. `devopsapp-aks`).             |
+| `AZURE_CONTAINER_REGISTRY_LOGIN_SERVER`       | Dari tahap tfplan (mis. `devopsappacr.azurecr.io`).             |
 
 ### 4. Setup Cluster Kubernetes
 
@@ -154,7 +155,7 @@ Setelah cluster AKS siap, kita perlu mengkonfigurasi beberapa komponen di dalamn
     - Buat secret di cluster:
       ```bash
       kubectl create namespace staging
-      
+
       kubectl create secret generic app-secret \
         --from-literal=APP_SECRET='super-secret-string-for-app' \
         -n staging

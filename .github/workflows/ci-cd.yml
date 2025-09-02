@@ -88,6 +88,15 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL'
 
+      - name: Docker Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        # with:
+        #   login-server: ${{ secrets.AZURE_CONTAINER_REGISTRY_LOGIN_SERVER }}
+        #   username: ${{ secrets.AZURE_CLIENT_ID }}
+        #   password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
       - name: Push image to ACR
         run: |
           docker push ${{ env.IMAGE_TAG }}
