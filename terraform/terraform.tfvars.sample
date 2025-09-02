@@ -1,0 +1,10 @@
+# terraform/terraform.tfvars.sample
+# Ganti nilai-nilai ini dengan konfigurasi Anda
+
+prefix_name = "heypicoapp"
+location    = "Southeast Asia"
+tags = {
+  environment = "Staging"
+  project     = "HelloApp"
+  owner       = "HeyPico.ai"
+}

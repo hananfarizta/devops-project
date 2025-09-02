@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+  namespace: staging
+  labels:
+    app: hello-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-app
+  template:
+    metadata:
+      labels:
+        app: hello-app
+    spec:
+      containers:
+      - name: hello-app
+        # Placeholder ini akan digantikan oleh Kustomize di overlay
+        image: hello-app-image
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: hello-app-config
+        - secretRef:
+            name: app-secret
+        # Liveness probe untuk memeriksa apakah aplikasi masih berjalan
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        # Readiness probe untuk memeriksa apakah aplikasi siap menerima traffic
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # Resource requests dan limits untuk manajemen sumber daya yang baik
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"

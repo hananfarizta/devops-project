@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: trivy-vulnerability-alerts
+  namespace: monitoring # Harus di namespace yang sama dengan Prometheus
+  labels:
+    # Label agar ditemukan oleh Prometheus Operator
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: trivy.rules
+    rules:
+    - alert: HighOrCriticalVulnerabilityFound
+      expr: trivy_image_vulnerabilities{severity=~"CRITICAL|HIGH"} > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Kerentanan Kritis atau Tinggi Terdeteksi pada Image"
+        description: "Image `{{ $labels.image_name }}` di namespace `{{ $labels.namespace }}` memiliki kerentanan dengan severity `{{ $labels.severity }}`. Total: {{ $value }}."

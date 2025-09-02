@@ -1,0 +1,29 @@
+# Node.js
+node_modules
+npm-debug.log
+.npm
+
+# macOS
+.DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+override.tf
+override.tf.json
+.terraform.lock.hcl
+
+# Kubernetes / Helm
+kubeconfig
+*.secret.yaml
+
+# IDE
+.idea/
+.vscode/
+
+# Build artifacts
+dist/
+build/

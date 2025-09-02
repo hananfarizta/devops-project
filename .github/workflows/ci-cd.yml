@@ -1,0 +1,137 @@
+name: CI/CD Pipeline for Staging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Required for OIDC login to Azure
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  build_scan_push:
+    name: Build, Scan, and Push Image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Get ACR Login Server
+        id: get_acr
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.ACR_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query loginServer --output tsv)
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> $GITHUB_ENV
+
+      - name: Define Image Tag
+        id: image_tag
+        run: echo "IMAGE_TAG=${{ env.ACR_LOGIN_SERVER }}/hello-app:${{ github.sha }}" >> $GITHUB_ENV
+      
+      - name: Build Docker image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_TAG }}
+          load: true # Load the image into the runner's docker daemon for scanning
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_TAG }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push image to ACR
+        run: |
+          docker push ${{ env.IMAGE_TAG }}
+
+  deploy_staging:
+    name: Deploy to Staging AKS
+    needs: build_scan_push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AZURE_AKS_NAME }}
+
+      - name: Get ACR Login Server
+        id: get_acr
+        run: |
+          ACR_LOGIN_SERVER=$(az acr show --name ${{ secrets.ACR_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --query loginServer --output tsv)
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> $GITHUB_ENV
+
+      - name: Update image tag in Kustomize overlay
+        run: |
+          cd k8s/overlays/staging
+          kustomize edit set image hello-app-image=${{ env.ACR_LOGIN_SERVER }}/hello-app:${{ github.sha }}
+
+      - name: Deploy to Kubernetes using Kustomize
+        run: |
+          kubectl apply -k k8s/overlays/staging
+
+      - name: Verify deployment rollout
+        run: |
+          kubectl rollout status deployment/hello-app -n staging --timeout=120s
+      
+      - name: Post-deployment health check
+        run: |
+          # Wait a moment for ingress to be ready
+          sleep 15
+          INGRESS_HOST=$(kubectl get ingress hello-app-ingress -n staging -o jsonpath='{.spec.rules[0].host}')
+          # We check via a temporary pod inside the cluster since the Ingress IP might not be public immediately
+          kubectl run curl-test --image=curlimages/curl:latest -n staging --rm -i --tty -- sh -c "curl -s -o /dev/null -w '%{http_code}' http://${INGRESS_HOST}/health" | grep 200

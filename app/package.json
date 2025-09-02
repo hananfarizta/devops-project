@@ -1,0 +1,33 @@
+{
+    "name": "hello-app",
+    "version": "1.0.0",
+    "description": "A simple Node.js Express app for AKS deployment",
+    "main": "src/server.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "nodemon src/server.js",
+        "test": "jest"
+    },
+    "keywords": [
+        "nodejs",
+        "express",
+        "kubernetes",
+        "azure"
+    ],
+    "author": "HeyPico.ai",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.19.2"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.0",
+        "supertest": "^7.0.0"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "coveragePathIgnorePatterns": [
+            "/node_modules/"
+        ]
+    }
+}
