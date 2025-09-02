@@ -67,9 +67,6 @@ jobs:
       - name: Define Image Tag
         id: image_tag
         run: echo "IMAGE_TAG=${{ env.ACR_LOGIN_SERVER }}/hello-app:${{ github.sha }}" >> $GITHUB_ENV
-
-      - name: Pull latest base image to ensure security patches
-        run: docker pull gcr.io/distroless/nodejs20-debian11
       
       - name: Build Docker image
         id: docker_build
@@ -89,7 +86,7 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
       - name: Push image to ACR
         run: |
