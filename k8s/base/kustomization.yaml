@@ -12,5 +12,5 @@ resources:
 # Definisikan nama dan tag image yang akan dipatch
 images:
 - name: hello-app-image
-  newName: your-acr-server.azurecr.io/hello-app # Ganti dengan nama ACR Anda
+  newName: devopsappacr.azurecr.io/hello-app:latest # Ganti dengan nama ACR Anda
   newTag: latest # Tag ini akan diganti oleh CI/CD
