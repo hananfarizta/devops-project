@@ -133,7 +133,7 @@ jobs:
 
       - name: Deploy to Kubernetes using Kustomize
         run: |
-          kustomize build overlays/staging | kubectl apply -f -
+          kubectl apply -k k8s/overlays/staging
 
       - name: Verify deployment rollout
         run: |
